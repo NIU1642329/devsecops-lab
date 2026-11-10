@@ -1,0 +1,9 @@
+[flake8]
+# E/W = pycodestyle style, F = pyflakes bugs, C90 = complexity, S = bandit security rules
+select = E,W,F,C90,S
+max-line-length = 100
+max-complexity = 10
+exclude = .git,__pycache__,.venv
+per-file-ignores =
+    # pytest uses plain assert statements on purpose
+    tests/*:S101
