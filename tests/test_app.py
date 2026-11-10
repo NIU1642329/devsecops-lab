@@ -22,7 +22,22 @@ def test_roll_d20(client):
     assert 1 <= body["result"] <= 20
 
 
+@pytest.mark.parametrize("sides", ["abc", "1", "-3"])
+def test_roll_rejects_bad_sides(client, sides):
+    assert client.get(f"/rolldice?sides={sides}").status_code == 400
+
+
 def test_hello(client):
     res = client.get("/hello?name=Laia")
     assert res.status_code == 200
     assert b"Laia" in res.data
+
+
+def test_ping_rejects_shell_injection(client):
+    res = client.get("/ping?host=127.0.0.1;cat /etc/passwd")
+    assert res.status_code == 400
+
+
+def test_admin_denied_without_configured_password(client):
+    assert client.get("/admin?password=").status_code == 403
+    assert client.get("/admin?password=changeme").status_code == 403
