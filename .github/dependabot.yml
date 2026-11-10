@@ -1,0 +1,13 @@
+# Dependabot version updates (security updates are enabled in Settings)
+version: 2
+updates:
+  - package-ecosystem: "pip"            # requirements.txt + requirements-dev.txt
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  # also keeps the (SHA-pinned) actions in .github/workflows up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
