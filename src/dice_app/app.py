@@ -4,7 +4,8 @@ import os
 import random
 import subprocess  # noqa: S404 - only called with a fixed argument list (see ping)
 
-from flask import Flask, request
+from flask import Flask, jsonify, request
+from markupsafe import escape
 from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
@@ -25,13 +26,15 @@ def roll_dice():
         return {"error": "a die needs at least 2 sides"}, 400
     # S311 is a false positive here: a dice game does not need a cryptographic RNG
     result = random.randint(1, sides)  # noqa: S311
-    return {"player": player, "sides": sides, "result": result}
+    # explicit JSON response (Content-Type: application/json), never rendered as HTML
+    return jsonify(player=player, sides=sides, result=result)
 
 
 @app.route("/hello")
 def hello():
     name = request.args.get("name", "world")
-    return f"<h1>Hello {name}!</h1>"
+    # CodeQL py/reflective-xss: escape user input before it goes into HTML
+    return f"<h1>Hello {escape(name)}!</h1>"
 
 
 @app.route("/ping")
@@ -58,8 +61,11 @@ def admin():
 
 @app.errorhandler(Exception)
 def handle_error(exc):
-    status = exc.code if isinstance(exc, HTTPException) else 500
-    return {"error": str(exc), "type": type(exc).__name__}, status
+    if isinstance(exc, HTTPException):
+        return {"error": exc.name}, exc.code
+    # never leak exception details to the client (OWASP A10:2025); log them instead
+    app.logger.exception("unhandled error")
+    return {"error": "internal server error"}, 500
 
 
 def main():
