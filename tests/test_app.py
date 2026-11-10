@@ -33,6 +33,12 @@ def test_hello(client):
     assert b"Laia" in res.data
 
 
+def test_hello_escapes_html(client):
+    res = client.get("/hello?name=<script>alert(1)</script>")
+    assert b"<script>" not in res.data
+    assert b"&lt;script&gt;" in res.data
+
+
 def test_ping_rejects_shell_injection(client):
     res = client.get("/ping?host=127.0.0.1;cat /etc/passwd")
     assert res.status_code == 400
